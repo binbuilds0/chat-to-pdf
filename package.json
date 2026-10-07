@@ -1,0 +1,27 @@
+{
+  "name": "chat-to-pdf",
+  "version": "1.0.0",
+  "description": "Save a ChatGPT or Claude conversation as a clean PDF or Markdown, in the browser. Paste the chat or open conversations.json from an official data export. Nothing is uploaded.",
+  "license": "MIT",
+  "author": "binbuilds",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "marked": "^18.1.0",
+    "temml": "^0.13.5",
+    "turndown": "^7.2.0",
+    "turndown-plugin-gfm": "^1.0.2"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "jsdom": "^30.1.2"
+  },
+  "keywords": ["chatgpt", "claude", "pdf", "markdown", "export", "conversation"]
+}

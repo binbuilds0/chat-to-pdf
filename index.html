@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; img-src 'self' https: data: blob:; connect-src 'none'; font-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Chat to PDF</title>
+<meta name="description" content="Paste a ChatGPT or Claude conversation, or open conversations.json from an official data export, and save it as a clean PDF or Markdown. Runs in your browser; nothing is uploaded.">
+<style>
+:root{--bg:#f7f6f2;--surface:#fff;--text:#1d1f1e;--muted:#5d6461;--line:#e2dfd6;--brand:#2f5d50;--on-brand:#fff;--soft:#eef3f0;--accent:#d98e2b;--link:#2f5d50}
+@media (prefers-color-scheme:dark){:root{--bg:#141716;--surface:#1c201f;--text:#ecefed;--muted:#a3aba7;--line:#313735;--brand:#7cc0a8;--on-brand:#0f1a16;--soft:#1f2826;--link:#7cc0a8}}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 ui-sans-serif,-apple-system,"Segoe UI",system-ui,Roboto,"Helvetica Neue",Arial,sans-serif}
+a{color:var(--link)}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 16px 48px}
+h1{font-size:34px;line-height:1.15;letter-spacing:-.02em;margin:0 0 10px}
+.lead{font-size:18px;color:var(--muted);margin:0 0 12px;max-width:760px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:0;padding:0;list-style:none}.chips li{font-size:14px;background:var(--soft);border:1px solid var(--line);border-radius:999px;padding:3px 12px;font-weight:600}
+.tool-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:24px;align-items:start;padding:22px 0 8px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px}
+.step{display:block;font-weight:700;font-size:16px;margin:0 0 6px}
+.hint{font-size:14.5px;color:var(--muted);margin:0 0 10px}
+kbd{font:12.5px ui-monospace,Consolas,monospace;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:0 5px;background:var(--bg)}
+#ctp-input{width:100%;min-height:220px;resize:vertical;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--bg);color:var(--text);font:14px/1.5 ui-monospace,Consolas,monospace}
+#ctp-input.drag{outline:3px dashed var(--brand);outline-offset:2px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:10px 0 0}
+.btn,.btn2{display:inline-flex;align-items:center;justify-content:center;border-radius:12px;font-family:inherit;line-height:1.2;cursor:pointer;min-height:44px}
+.btn{border:0;padding:12px 18px;font-weight:650;font-size:16px;background:var(--brand);color:var(--on-brand)}
+.btn2{border:1px solid var(--line);background:var(--surface);color:var(--text);font-weight:600;font-size:15px;padding:10px 14px}
+.btn:disabled,.btn2:disabled{opacity:.45;cursor:not-allowed}
+.btn:focus-visible,.btn2:focus-visible,.linkbtn:focus-visible{outline:3px solid var(--brand);outline-offset:2px}
+.linkbtn{background:none;border:0;color:var(--link);font:inherit;font-size:15px;cursor:pointer;text-decoration:underline;text-underline-offset:2px;padding:6px 2px}
+.file{position:relative;overflow:hidden}.file input{position:absolute;inset:0;opacity:0;cursor:pointer;font-size:0}
+.file:focus-within{outline:3px solid var(--brand);outline-offset:2px}
+#ctp-notice{margin:12px 0 0;padding:10px 12px;border-radius:10px;background:var(--soft);font-size:15px}
+#ctp-notice[data-kind=warn]{border-left:4px solid var(--accent)}
+#ctp-picker{margin:12px 0 0}#ctp-picker select{width:100%;margin-top:6px;border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--bg);color:var(--text);font-family:inherit;font-size:15px}
+.sep{border:0;border-top:1px solid var(--line);margin:18px 0 14px}
+.field{display:block;font-size:15px;margin:0 0 10px}.field input,.field select{display:block;width:100%;margin-top:4px;border:1px solid var(--line);border-radius:10px;padding:9px 10px;background:var(--bg);color:var(--text);font-family:inherit;font-size:15px}
+.opts{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;font-size:15px}.opts .field{margin:0;min-width:140px}
+.check{display:inline-flex;gap:7px;align-items:center;cursor:pointer}.check input{width:18px;height:18px;accent-color:var(--brand)}
+.out-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin:0 0 8px;font-size:15px}.out-head span{color:var(--muted);font-size:14px}
+.doc{background:#fff;color:#1d1f1e;border:1px solid var(--line);border-radius:14px;padding:26px 28px;min-height:420px;font:16px/1.6 ui-sans-serif,-apple-system,"Segoe UI",system-ui,Roboto,"Helvetica Neue",Arial,"Noto Sans","PingFang SC","Microsoft YaHei",sans-serif;overflow-wrap:break-word;box-shadow:0 18px 50px -30px rgba(31,92,76,.45)}
+.doc a{color:#1f5c4c}.doc img{max-width:100%;height:auto}.doc.noimg img{display:none}
+.doc .empty{color:#5a615d;text-align:center;padding:90px 10px}
+.doc-head{border-bottom:1px solid #e3dfd4;margin:0 0 20px;padding:0 0 10px}.doc-title{font-size:23px;line-height:1.25;margin:0}.doc-meta{color:#5a615d;font-size:13px;margin:4px 0 0}
+.turn{margin:0 0 22px}.who{font:700 12px/1.2 ui-sans-serif,system-ui,sans-serif;letter-spacing:.07em;text-transform:uppercase;color:#1f5c4c;margin:0 0 6px}
+.turn.user .body{border-left:3px solid #d98e2b;padding:2px 0 2px 12px}.turn .body>:last-child{margin-bottom:0}
+.doc h1,.doc h2,.doc h3,.doc h4{line-height:1.3;margin:18px 0 8px}.doc h1{font-size:22px}.doc h2{font-size:20px}.doc h3{font-size:17.5px}.doc h4{font-size:16px}
+.doc p{margin:0 0 12px}.doc ul,.doc ol{margin:0 0 12px;padding-left:24px}.doc blockquote{margin:0 0 12px;padding:2px 0 2px 14px;border-left:3px solid #e3dfd4;color:#4a504d}
+.doc pre{background:#f6f5f1;border:1px solid #e4e2da;border-radius:8px;padding:12px 14px;margin:0 0 14px;overflow-x:auto;font:13.5px/1.5 ui-monospace,Consolas,"Courier New",monospace;white-space:pre;tab-size:4}
+.doc pre[data-lang]::before{content:attr(data-lang);display:block;font:600 11px/1 ui-sans-serif,system-ui,sans-serif;color:#6b716d;text-transform:lowercase;letter-spacing:.04em;margin:0 0 8px}
+.doc pre code{background:none;padding:0;font:inherit}.doc code{font:13.5px ui-monospace,Consolas,monospace;background:#f1efe8;border-radius:4px;padding:1px 4px}
+.doc table{border-collapse:collapse;margin:0 0 14px;font-size:14.5px;display:block;overflow-x:auto;max-width:100%}
+.doc th,.doc td{border:1px solid #dcd8cc;padding:6px 9px;text-align:left;vertical-align:top}.doc th{background:#f1efe8;font-weight:650}
+.doc math[display=block]{display:block;margin:10px 0 14px;overflow-x:auto}.doc hr{border:0;border-top:1px solid #e3dfd4;margin:16px 0}
+footer{border-top:1px solid var(--line);margin-top:28px;padding-top:16px;font-size:14px;color:var(--muted);max-width:760px}
+@media (max-width:860px){.tool-grid{grid-template-columns:1fr}h1{font-size:28px}.doc{padding:18px 16px;min-height:260px}.doc .empty{padding:50px 6px}}
+@media print{
+ @page{margin:16mm 15mm 18mm}
+ html,body{background:#fff!important;color:#000}
+ .np{display:none!important}
+ .wrap{max-width:none;padding:0}.tool-grid{display:block;padding:0}
+ .doc{border:0;border-radius:0;box-shadow:none;padding:0;min-height:0;font-size:11.5pt}
+ .doc pre{white-space:pre-wrap;overflow:visible;overflow-wrap:anywhere;font-size:9.5pt}
+ .doc table{display:table;width:100%;overflow:visible;font-size:10pt}.doc thead{display:table-header-group}
+ .doc th,.doc td{overflow-wrap:anywhere}
+ .doc tr,.doc img,.doc math[display=block],.who{break-inside:avoid}.who{break-after:avoid}
+ .doc math[display=block]{overflow:visible}
+ .doc a{color:#000}
+ *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="np">
+<h1>Save a ChatGPT or Claude chat as PDF or Markdown</h1>
+<p class="lead">Paste the conversation and get a clean PDF, with every message labelled and code, tables and math intact. It runs in your browser, so nothing is uploaded.</p>
+<ul class="chips" aria-label="What you get"><li>Free, no limit</li><li>No watermark</li><li>No sign-up</li><li>Nothing uploaded</li></ul>
+</header>
+
+<div class="tool-grid">
+<div class="panel np">
+  <label class="step" for="ctp-input">1. Paste the conversation</label>
+  <p class="hint">Open the chat or its share link, press <kbd>Ctrl</kbd>+<kbd>A</kbd> then <kbd>Ctrl</kbd>+<kbd>C</kbd>, and paste here. Or open a file: a saved page, Markdown, or <code>conversations.json</code> from a ChatGPT or Claude data export.</p>
+  <textarea id="ctp-input" spellcheck="false" placeholder="Paste here (Ctrl+V)&hellip;"></textarea>
+  <div class="row"><label class="btn2 file">Open a file<input type="file" id="ctp-file" accept=".json,.html,.htm,.md,.markdown,.txt,application/json,text/html,text/markdown,text/plain"></label><button type="button" class="btn2" id="ctp-example">Try an example</button><button type="button" class="linkbtn" id="ctp-clear">Clear</button></div>
+  <div id="ctp-notice" role="status" hidden></div>
+  <div id="ctp-picker" hidden><label class="field">Find a conversation<input id="ctp-filter" type="search" placeholder="Filter by title" autocomplete="off"></label><select id="ctp-list" size="6" aria-label="Conversations in the export"></select></div>
+  <hr class="sep">
+  <span class="step">2. Check the details</span>
+  <label class="field">Title (also the file name)<input id="ctp-title" type="text" autocomplete="off" placeholder="Filled in from the first message"></label>
+  <div class="opts"><label class="field">Paper<select id="ctp-paper"><option value="auto">Automatic</option><option value="letter">US Letter</option><option value="a4">A4</option></select></label>
+  <label class="check"><input type="checkbox" id="ctp-labels" checked> Show &ldquo;You&rdquo; / &ldquo;ChatGPT&rdquo; labels</label><label class="check"><input type="checkbox" id="ctp-images" checked> Images</label></div>
+  <hr class="sep">
+  <span class="step">3. Save</span>
+  <div class="row"><button type="button" class="btn" id="ctp-pdf" disabled>Save as PDF</button><button type="button" class="btn2" id="ctp-md" disabled>Download Markdown</button></div>
+  <p class="hint" style="margin-top:10px">In the print window, choose <b>Save as PDF</b> as the destination. Text in the PDF stays selectable and searchable.</p>
+  <noscript><p class="hint"><b>This tool needs JavaScript.</b> It runs in your browser so your conversation never leaves it.</p></noscript>
+</div>
+<div><div class="out-head np"><b>Preview</b><span id="ctp-count" aria-live="polite"></span></div><article id="ctp-doc" class="doc" aria-label="Document preview"></article></div>
+</div>
+
+<footer class="np">Open source under the MIT License. The page&rsquo;s Content-Security-Policy blocks all network requests, so your conversation stays on your device. Want to skip the copy and paste? <a href="https://pressleaf.roledawn.com" rel="noopener">Pressleaf</a>, a Chrome extension by the same author, saves the open chat or any web page as a clean PDF. ChatGPT is a trademark of OpenAI and Claude is a trademark of Anthropic; this project is not affiliated with either.</footer>
+</div>
+<script src="dist/chat-to-pdf.js"></script>
+</body>
+</html>
